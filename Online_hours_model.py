@@ -1,4 +1,5 @@
-
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Created on Sat Jan 26 11:21:13 2019
 
@@ -10,6 +11,7 @@ import numpy as np
 import seaborn as sns
 import datetime
 import time
+import sys
 import matplotlib.pyplot as plt
 
 #Specifying the file details
@@ -99,7 +101,7 @@ sns.boxplot(tmp.online_hours).set_title("boxplot for unclean hours")
 plt.figure()
 sns.boxplot(train_data.online_hours).set_title("boxplot for clean hours")
 
-#creating Features of online_hours
+#creating a baseline model by predicting online_hours as mean
 def max_min(x):
     return(x.max()-x.min())
 def percentile_1(x):
@@ -123,9 +125,9 @@ train_df_mean.columns=train_df_mean.columns.map('_'.join)
 train_df_mean=train_df_mean.rename(columns={"driver_id_":"driver_id"})
 #train_df_mean=train_df_mean.drop(['index'],axis=1)
 #train_df_mean['online_hours_mean']=train_df_mean['online_hours_mean'].round()
+all_data_M=pd.merge(train_data.drop_duplicates(),drivers_df.drop_duplicates(),how='inner',on='driver_id')
+sns.boxplot(all_data_M.gender,all_data_M.online_hours).set_title("online_hours vs gender")
 test_df['date']=pd.to_datetime(test_df['date'])
-
-#creating train and test data
 def Creating_train_test(train_data,test_df,drivers_df,label_encode=0,merge=0):
     #creating features for date
     test_df['dayofyear']=test_df['date'].dt.dayofyear
@@ -137,6 +139,9 @@ def Creating_train_test(train_data,test_df,drivers_df,label_encode=0,merge=0):
     all_data=pd.concat([train_data,test_df],axis=0)
     #merging training data with driver data
     all_data_M=pd.merge(all_data.drop_duplicates(),drivers_df.drop_duplicates(),how='inner',on='driver_id')
+    gender=all_data_M.groupby(['gender'])['online_hours'].mean().reset_index()
+    gender=gender.rename(columns={'online_hours':'mean_gender_hours'})
+    all_data_M=pd.merge(all_data_M,gender,how='left',on='gender')
     if merge==0:
         all_data_M=pd.merge(all_data_M,train_df_mean,how="left",on="driver_id")
         all_data_M=all_data_M.fillna(0)
@@ -162,7 +167,7 @@ dependant=['online_hours']
 
 
 from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression,Ridge,Lasso
 from sklearn.metrics import mean_squared_error,mean_absolute_error
 
 model_rf=RandomForestRegressor(500)
@@ -170,11 +175,25 @@ model_rf.fit(x_train[independant],x_train[dependant])
 predict_rf=model_rf.predict(x_test[independant])
 predict_rf[id]=0#replacing the predicted value of unsenn driver id with 0
 
-model_gbm=GradientBoostingRegressor(n_estimators=200,learning_rate=0.03)
+model_gbm=GradientBoostingRegressor(n_estimators=156,learning_rate=0.03)
 model_gbm.fit(x_train[independant],x_train[dependant])
 predict_gbm=model_gbm.predict(x_test[independant])
 predict_gbm[id]=0
 
+x_train=x_train.drop(['mean_gender_hours'],axis=1)
 
-print("MSE dor RF model:\n",mean_squared_error(x_test[dependant],predict_rf))
-print("MSE for GBM model: \n",mean_squared_error(x_test[dependant],predict_gbm))
+model_linear=LinearRegression()
+model_linear.fit(x_train[independant],x_train[dependant])
+predict_linear=model_linear.predict(x_test[independant])
+predict_linear[id]=0
+
+model_ridge=Ridge(0.001)
+model_ridge.fit(x_train[independant],x_train[dependant])
+predict_ridge=model_ridge.predict(x_test[independant])
+predict_ridge[id]=0
+
+
+mean_squared_error(x_test[dependant],predict_ridge)
+mean_squared_error(x_test[dependant],predict_linear)
+mean_squared_error(x_test[dependant],predict_rf)
+mean_squared_error(x_test[dependant],predict_gbm)
