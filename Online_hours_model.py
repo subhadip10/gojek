@@ -168,32 +168,68 @@ dependant=['online_hours']
 
 from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
 from sklearn.linear_model import LinearRegression,Ridge,Lasso
+from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import mean_squared_error,mean_absolute_error
 
-model_rf=RandomForestRegressor(500)
-model_rf.fit(x_train[independant],x_train[dependant])
-predict_rf=model_rf.predict(x_test[independant])
-predict_rf[id]=0#replacing the predicted value of unsenn driver id with 0
-
-model_gbm=GradientBoostingRegressor(n_estimators=156,learning_rate=0.03)
-model_gbm.fit(x_train[independant],x_train[dependant])
-predict_gbm=model_gbm.predict(x_test[independant])
-predict_gbm[id]=0
-
-x_train=x_train.drop(['mean_gender_hours'],axis=1)
-
+#Baseline model
+#Linear regression
 model_linear=LinearRegression()
 model_linear.fit(x_train[independant],x_train[dependant])
 predict_linear=model_linear.predict(x_test[independant])
 predict_linear[id]=0
 
-model_ridge=Ridge(0.001)
-model_ridge.fit(x_train[independant],x_train[dependant])
-predict_ridge=model_ridge.predict(x_test[independant])
-predict_ridge[id]=0
-
-
-mean_squared_error(x_test[dependant],predict_ridge)
 mean_squared_error(x_test[dependant],predict_linear)
-mean_squared_error(x_test[dependant],predict_rf)
+
+
+gbm_param = {'learning_rate':[0.02,0.025,0.03,.035], 
+           'n_estimators':[100,125,150,156,160,170],
+           'max_depth':[2,3,4,5,6,7]}
+
+tuning=GridSearchCV(estimator =GradientBoostingRegressor(min_samples_split=2,
+                                                         min_samples_leaf=1,
+                                                         subsample=1.0,
+                                                         max_features=None),
+                                                         param_grid = gbm_param,
+                                                         scoring='neg_mean_squared_error',
+                                                         n_jobs=4,
+                                                         iid=False,
+                                                         cv=3,
+                                                         verbose=2)
+tuning.fit(x_train[independant],x_train[dependant])
+print(tuning.best_params_)
+
+model_gbm=GradientBoostingRegressor(n_estimators=156,learning_rate=0.03)
+model_gbm.fit(x_train[independant],x_train[dependant])
+predict_gbm=model_gbm.predict(x_test[independant])
+predict_gbm[id]=0
 mean_squared_error(x_test[dependant],predict_gbm)
+
+
+rf_param={'max_depth':[2,6,8,10,12,14,16,18,20]}
+tuning_rf=GridSearchCV(estimator =RandomForestRegressor(min_samples_split=2,
+                                                         min_samples_leaf=1,
+                                                         bootstrap=True,
+                                                         max_features=None),
+                                                         param_grid = rf_param,
+                                                         scoring='neg_mean_squared_error',
+                                                         n_jobs=4,
+                                                         iid=False,
+                                                         cv=3,
+                                                         verbose=2)
+tuning_rf.fit(x_train[independant],x_train[dependant])
+print(tuning_rf.best_params_)
+
+model_rf=RandomForestRegressor(500,max_depth=10)
+model_rf.fit(x_train[independant],x_train[dependant])
+predict_rf=model_rf.predict(x_test[independant])
+predict_rf[id]=0#replacing the predicted value of unsenn driver id with 0
+mean_squared_error(x_test[dependant],predict_rf)
+
+#x_train=x_train.drop(['mean_gender_hours'],axis=1)
+
+#combining GBM and RF score
+final=(predict_rf+
+       predict_gbm)/2
+
+mean_squared_error(x_test[dependant],final)
+
