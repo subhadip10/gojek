@@ -167,7 +167,7 @@ dependant=['online_hours']
 
 
 from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
-from sklearn.linear_model import LinearRegression,Ridge,Lasso
+from sklearn.linear_model import LinearRegression
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import mean_squared_error,mean_absolute_error
 
