@@ -8,7 +8,7 @@ This folder contains:
  
  - Model building by merging pings data and driver data script
  
- -Final Script for model training and prediction.
+ - Final Script for model training and prediction.
  
  - Third file contains exploration and analysis done to reach final solution in .html format
  
