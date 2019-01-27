@@ -2,12 +2,14 @@
 
 gojek_assignment
 
-This script contains python script
+This folder contains:
 
- - Data exploration for driver
+ - Data exploration for driver script
  
- - Model building by merging pings data and driver data
+ - Model building by merging pings data and driver data script
  
- - Third file contains exploration and analysis done to reach final solution in .pdf format
+ -Final Script for model training and prediction.
+ 
+ - Third file contains exploration and analysis done to reach final solution in .html format
  
  - There is a write up of the steps and insights found during solution development
