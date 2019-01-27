@@ -17,6 +17,6 @@ This folder contains:
  
  - Final Script for model training and prediction.
  
- - Third file contains exploration and analysis done to reach final solution in .html format
+ - Third file contains exploration and analysis done to reach final solution in .pdf format
  
  - There is a write up of the steps and insights found during solution development
